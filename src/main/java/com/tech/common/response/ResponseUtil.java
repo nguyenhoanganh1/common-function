@@ -1,13 +1,14 @@
 package com.tech.common.response;
 
-public record ResponseUtil<T>(String code, String message, T data) {
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.UUID;
+
+public record ResponseUtil<T>(MessageStatus status, T data, Metadata metadata) {
 
     public static <T> ResponseUtil<T> success(T data) {
-        return new ResponseUtil<>("200", "Success", data);
+        MessageStatus messageStatus = new MessageStatus("200", "Success", Collections.emptyList());
+        Metadata metadata = new Metadata(UUID.randomUUID().toString(), LocalDateTime.now());
+        return new ResponseUtil<>(messageStatus, data, metadata);
     }
-
-    public static <T> ResponseUtil<T> error(String code, String message, T data) {
-        return new ResponseUtil<>(code, message, data);
-    }
-
 }
