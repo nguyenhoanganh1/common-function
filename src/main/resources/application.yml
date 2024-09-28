@@ -1,6 +1,15 @@
 server:
   port: ${SERVER_PORT:19001}
 
+management:
+  server:
+    port: 18001
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: "*"
+
 spring:
   application:
     name: common-function
@@ -20,3 +29,7 @@ kafka:
       topic: ${KAFKA_CONSUMER_TEST_TOPIC:test1}
       group-id: ${KAFKA_CONSUMER_TEST_GROUP_ID:test-group-id}
       auto-offset-reset: ${KAFKA_CONSUMER_TEST_OFFSET_RESET:earliest}
+logging:
+  level:
+    org:
+      springframework: info

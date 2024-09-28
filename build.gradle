@@ -27,6 +27,9 @@ repositories {
 
 dependencies {
 
+    // Spring health check
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
     // Object Mapper
     implementation 'com.google.code.gson:gson:2.11.0'
 
