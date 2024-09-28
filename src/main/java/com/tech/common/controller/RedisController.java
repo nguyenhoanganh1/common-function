@@ -39,7 +39,7 @@ public class RedisController {
         values.add("456");
         redisCacheService.putListInCache(key, values);
 
-        List<String> data = redisCacheService.getListFromCache(key, String.class);
+        List<String> data = redisCacheService.getListFromCache(key);
         return ResponseEntity.ok(ResponseUtil.success(data));
     }
 
@@ -49,7 +49,7 @@ public class RedisController {
         Map<String, String> valueMap = Map.of("map-123", "123");
         redisCacheService.putMapInCache(key, valueMap);
 
-        Map<String, String> data = redisCacheService.getMapFromCache(key, String.class, String.class);
+        Map<String, String> data = redisCacheService.getMapFromCache(key);
         return ResponseEntity.ok(ResponseUtil.success(data));
     }
 }

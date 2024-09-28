@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * The type Redis cache service.
@@ -84,12 +83,11 @@ public class RedisCacheService {
     /**
      * Gets list from cache.
      *
-     * @param <V>   the type parameter
-     * @param key   the key
-     * @param clazz the clazz
+     * @param <V> the type parameter
+     * @param key the key
      * @return the list from cache
      */
-    public <V> List<V> getListFromCache(String key, Class<V> clazz) {
+    public <V> List<V> getListFromCache(String key) {
         List<Object> cachedList = redisTemplate.opsForList().range(key, 0, -1);
 
         if (CollectionUtils.isEmpty(cachedList)) {
@@ -133,25 +131,21 @@ public class RedisCacheService {
     /**
      * Gets map from cache.
      *
-     * @param <K>       the type parameter
-     * @param <V>       the type parameter
-     * @param key       the key
-     * @param keyType   the key type
-     * @param valueType the value type
+     * @param <K> the type parameter
+     * @param <V> the type parameter
+     * @param key the key
      * @return the map from cache
      */
-    public <K, V> Map<K, V> getMapFromCache(String key, Class<K> keyType, Class<V> valueType) {
+    public <K, V> Map<K, V> getMapFromCache(String key) {
         Map<Object, Object> cachedMap = redisTemplate.opsForHash().entries(key);
 
         if (CollectionUtils.isEmpty(cachedMap)) {
             return Collections.emptyMap();
         }
 
-        return cachedMap.entrySet().stream()
-                .collect(Collectors.toMap(
-                        entry -> keyType.cast(entry.getKey()),
-                        entry -> valueType.cast(entry.getValue())
-                ));
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.convertValue(cachedMap, new TypeReference<>() {
+        });
     }
 
     /**

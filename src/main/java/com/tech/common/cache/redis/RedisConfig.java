@@ -1,6 +1,5 @@
 package com.tech.common.cache.redis;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -8,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
@@ -39,18 +38,12 @@ public class RedisConfig {
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
-        template.setEnableDefaultSerializer(false);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.activateDefaultTyping(objectMapper.getPolymorphicTypeValidator(), ObjectMapper.DefaultTyping.NON_FINAL);
-        Jackson2JsonRedisSerializer<Object> valueSerializer = new Jackson2JsonRedisSerializer<>(objectMapper, Object.class);
-
 
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(valueSerializer);
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
 
         template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(valueSerializer);
+        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
 
         template.afterPropertiesSet();
         return template;
