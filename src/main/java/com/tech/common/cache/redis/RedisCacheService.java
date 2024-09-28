@@ -1,12 +1,17 @@
 package com.tech.common.cache.redis;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * The type Redis cache service.
@@ -50,58 +55,77 @@ public class RedisCacheService {
     }
 
     /**
-     * Put list in cache.
+     * Put values in cache.
      *
-     * @param key  the key
-     * @param list the list
+     * @param <V>    the type parameter
+     * @param key    the key
+     * @param values the values
      */
-    public void putListInCache(String key, List<?> list) {
-        redisTemplate.opsForList().rightPushAll(key, list);
+    public <V> void putListInCache(String key, V values) {
+        evictCacheByKey(key);
+        redisTemplate.opsForList().rightPushAll(key, values);
     }
 
     /**
-     * Put list in cache.
+     * Put values in cache.
      *
+     * @param <V>         the type parameter
      * @param key         the key
-     * @param list        the list
+     * @param values      the values
      * @param expiredTime the expired time
      * @param timeUnit    the time unit
      */
-    public void putListInCache(String key, List<?> list, Long expiredTime, TimeUnit timeUnit) {
-        redisTemplate.opsForList().rightPushAll(key, list);
+    public <V> void putListInCache(String key, List<V> values, Long expiredTime, TimeUnit timeUnit) {
+        evictCacheByKey(key);
+        redisTemplate.opsForList().rightPushAll(key, values);
         redisTemplate.expire(key, expiredTime, timeUnit);
     }
 
     /**
      * Gets list from cache.
      *
-     * @param key the key
+     * @param <V>   the type parameter
+     * @param key   the key
+     * @param clazz the clazz
      * @return the list from cache
      */
-    public List<?> getListFromCache(String key) {
-        return redisTemplate.opsForList().range(key, 0, -1);
+    public <V> List<V> getListFromCache(String key, Class<V> clazz) {
+        List<Object> cachedList = redisTemplate.opsForList().range(key, 0, -1);
+
+        if (CollectionUtils.isEmpty(cachedList)) {
+            return Collections.emptyList();
+        }
+
+        Object o = cachedList.get(0);
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.convertValue(o, new TypeReference<>() {
+        });
     }
 
     /**
-     * Put map in cache.
+     * Put values in cache.
      *
-     * @param key the key
-     * @param map the map
+     * @param <K>    the type parameter
+     * @param <V>    the type parameter
+     * @param key    the key
+     * @param values the values
      */
-    public void putMapInCache(String key, Map<?, ?> map) {
-        redisTemplate.opsForHash().putAll(key, map);
+    public <K, V> void putMapInCache(String key, Map<K, V> values) {
+        redisTemplate.opsForHash().putAll(key, values);
     }
 
     /**
-     * Put map in cache.
+     * Put values in cache.
      *
+     * @param <K>         the type parameter
+     * @param <V>         the type parameter
      * @param key         the key
-     * @param map         the map
+     * @param values      the values
      * @param expiredTime the expired time
      * @param timeUnit    the time unit
      */
-    public void putMapInCache(String key, Map<?, ?> map, Long expiredTime, TimeUnit timeUnit) {
-        redisTemplate.opsForHash().putAll(key, map);
+    public <K, V> void putMapInCache(String key, Map<K, V> values, Long expiredTime, TimeUnit timeUnit) {
+        redisTemplate.opsForHash().putAll(key, values);
         redisTemplate.expire(key, expiredTime, timeUnit);
     }
 
@@ -109,11 +133,25 @@ public class RedisCacheService {
     /**
      * Gets map from cache.
      *
-     * @param key the key
+     * @param <K>       the type parameter
+     * @param <V>       the type parameter
+     * @param key       the key
+     * @param keyType   the key type
+     * @param valueType the value type
      * @return the map from cache
      */
-    public Map<?, ?> getMapFromCache(String key) {
-        return redisTemplate.opsForHash().entries(key);
+    public <K, V> Map<K, V> getMapFromCache(String key, Class<K> keyType, Class<V> valueType) {
+        Map<Object, Object> cachedMap = redisTemplate.opsForHash().entries(key);
+
+        if (CollectionUtils.isEmpty(cachedMap)) {
+            return Collections.emptyMap();
+        }
+
+        return cachedMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        entry -> keyType.cast(entry.getKey()),
+                        entry -> valueType.cast(entry.getValue())
+                ));
     }
 
     /**
