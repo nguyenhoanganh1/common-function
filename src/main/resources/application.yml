@@ -1,21 +1,22 @@
 server:
-  port: 19001
+  port: ${SERVER_PORT:19001}
 
 spring:
   application:
     name: common-function
   data:
     redis:
-      host: localhost
-      port: 6379
-      database: 0
-  kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-    consumer:
-      group-id: my-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
+
+kafka:
+  bootstrap-servers: ${KAFKA_SERVER:localhost:9092}
+  producers:
+    test:
+      topic: ${KAFKA_PRODUCER_TEST_TOPIC:test1}
+  consumers:
+    test:
+      topic: ${KAFKA_CONSUMER_TEST_TOPIC:test1}
+      group-id: ${KAFKA_CONSUMER_TEST_GROUP_ID:test-group-id}
+      auto-offset-reset: ${KAFKA_CONSUMER_TEST_OFFSET_RESET:earliest}

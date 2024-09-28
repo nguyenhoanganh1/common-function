@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
  *
  * @param <T> the type parameter
  */
-public abstract class AbstractExportCsv<T> {
+public abstract class BaseExportCsv<T> {
 
     /**
      * Is write header boolean.

@@ -1,11 +1,11 @@
 package com.tech.common.file.csv.exporter.handler;
 
 import com.tech.common.file.csv.dto.ProductDto;
-import com.tech.common.file.csv.exporter.AbstractExportCsv;
+import com.tech.common.file.csv.exporter.BaseExportCsv;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ProductCsvExportHandler extends AbstractExportCsv<ProductDto> {
+public class ProductCsvExportHandler extends BaseExportCsv<ProductDto> {
 
     @Override
     protected boolean isWriteHeader() {

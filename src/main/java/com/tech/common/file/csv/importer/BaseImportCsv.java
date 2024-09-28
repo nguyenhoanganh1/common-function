@@ -13,7 +13,7 @@ import java.util.*;
  *
  * @param <T> the type parameter
  */
-public abstract class AbstractImportCsv<T> {
+public abstract class BaseImportCsv<T> {
 
     private final Set<T> processedData = new HashSet<>(); // Lưu trữ các dữ liệu đã xử lý
     private final List<T> duplicateData = new ArrayList<>(); // Lưu trữ các dòng trùng lặp

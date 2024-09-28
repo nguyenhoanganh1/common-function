@@ -1,7 +1,7 @@
 package com.tech.common.file.csv.importer.handler;
 
 import com.tech.common.file.csv.dto.UserDto;
-import com.tech.common.file.csv.importer.AbstractImportCsv;
+import com.tech.common.file.csv.importer.BaseImportCsv;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -11,7 +11,7 @@ import java.util.Set;
  * The type User importer handler.
  */
 @Component
-public class UserImporterHandler extends AbstractImportCsv<UserDto> {
+public class UserImporterHandler extends BaseImportCsv<UserDto> {
 
     @Override
     protected List<String> getHeaders() {
