@@ -13,6 +13,13 @@ management:
 spring:
   application:
     name: common-function
+  datasource:
+    url: jdbc:postgresql://localhost:5432/common-db
+    username: username
+    password: password
+    hikari:
+      connection-timeout: 20000
+      maximum-pool-size: 5
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -29,7 +36,3 @@ kafka:
       topic: ${KAFKA_CONSUMER_TEST_TOPIC:test1}
       group-id: ${KAFKA_CONSUMER_TEST_GROUP_ID:test-group-id}
       auto-offset-reset: ${KAFKA_CONSUMER_TEST_OFFSET_RESET:earliest}
-logging:
-  level:
-    org:
-      springframework: info

@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@SystemLogging
 @RequiredArgsConstructor
 @RequestMapping("/smart-otp")
 @RestController
@@ -19,6 +18,7 @@ public class SmartOtpController {
 
     private final SmartOtpUtil smartOtpUtil;
 
+    @SystemLogging
     @PostMapping("/secret-key/registration")
     public ResponseEntity<ResponseUtil<String>> generateSecretKey() {
         return ResponseEntity.ok(ResponseUtil.success(smartOtpUtil.generateSecretKey()));
