@@ -12,7 +12,6 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -34,9 +33,6 @@ public class LoggingAspect {
         HttpServletRequest request = attributes.getRequest();
         HttpServletResponse response = attributes.getResponse();
 
-        RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
-        String requestId = requestAttributes.getAttribute("requestId", RequestAttributes.SCOPE_REQUEST).toString();
-
         MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
         String controllerName = methodSignature.getDeclaringType().getSimpleName();
         String methodName = methodSignature.getName();
@@ -46,41 +42,39 @@ public class LoggingAspect {
 
         SystemLogging systemLogging = methodSignature.getMethod().getAnnotation(SystemLogging.class);
 
-        this.buildRequestLog(systemLogging, requestId, httpMethod, controllerName, methodName, requestBody);
+        this.buildRequestLog(systemLogging, httpMethod, controllerName, methodName, requestBody);
 
         Object result;
         try {
             result = joinPoint.proceed();
         } catch (Throwable throwable) {
-            log.error("Error occurred in requestId: {}, error: {}", requestId, throwable.getMessage());
+            log.error("Error occurred in error: {}", throwable.getMessage());
             throw throwable;
         }
 
-        this.buildResponseLog(systemLogging, response, result, requestId, httpMethod, controllerName, methodName);
+        this.buildResponseLog(systemLogging, response, result, httpMethod, controllerName, methodName);
 
         return result;
     }
 
     private void buildRequestLog(SystemLogging systemLogging,
-                                 String requestId,
                                  String httpMethod,
                                  String controllerName,
                                  String methodName,
                                  String requestBody) {
         boolean isRequest = systemLogging.isRequest();
         if (isRequest) {
-            log.info("REQUEST - requestId: {}, httpMethod: {}, controller: {}, method: {}, request: {}",
-                    requestId, httpMethod, controllerName, methodName, requestBody);
+            log.info("REQUEST - httpMethod: {}, controller: {}, method: {}, request: {}",
+                    httpMethod, controllerName, methodName, requestBody);
         } else {
-            log.info("REQUEST - requestId: {}, httpMethod: {}, controller: {}, method: {}",
-                    requestId, httpMethod, controllerName, methodName);
+            log.info("REQUEST - httpMethod: {}, controller: {}, method: {}",
+                    httpMethod, controllerName, methodName);
         }
     }
 
     private void buildResponseLog(SystemLogging systemLogging,
                                   HttpServletResponse response,
                                   Object result,
-                                  String requestId,
                                   String httpMethod,
                                   String controllerName,
                                   String methodName) {
@@ -89,11 +83,11 @@ public class LoggingAspect {
         ResponseEntity<ResponseUtil<Object>> responseUtil = (ResponseEntity<ResponseUtil<Object>>) result;
         Object responseData = responseUtil.getBody().data();
         if (isResponse) {
-            log.info("RESPONSE {} - requestId: {}, httpMethod: {}, controller: {}, method: {}, response: {}",
-                    status, requestId, httpMethod, controllerName, methodName, responseData);
+            log.info("RESPONSE {} - httpMethod: {}, controller: {}, method: {}, response: {}",
+                    status, httpMethod, controllerName, methodName, responseData);
         } else {
-            log.info("RESPONSE {} - requestId: {}, httpMethod: {}, controller: {}, method: {}",
-                    status, requestId, httpMethod, controllerName, methodName);
+            log.info("RESPONSE {} - httpMethod: {}, controller: {}, method: {}",
+                    status, httpMethod, controllerName, methodName);
         }
     }
 
