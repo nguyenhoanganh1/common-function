@@ -9,6 +9,9 @@ management:
       base-path: /actuator
       exposure:
         include: "*"
+  metrics:
+    enable:
+      jdbc.connections: true
   tracing:
     enabled: true
     sampling:
@@ -22,6 +25,8 @@ management:
       endpoint: http://localhost:9411/api/v2/spans
 
 spring:
+  profiles:
+    active: composite
   application:
     name: common-function
   datasource:
@@ -29,15 +34,85 @@ spring:
     username: username
     password: password
     hikari:
+      minimum-idle: 10
+      maximum-pool-size: 10
+      idle-timeout: 10000
+      max-lifetime: 1000
       connection-timeout: 20000
-      maximum-pool-size: 5
+      pool-name: HikariCP
+      auto-commit: true
   data:
     redis:
+      mode: standalone  # standalone / cluster
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       database: ${REDIS_DATABASE:0}
+      password: ''  # Nếu có mật khẩu
+      timeout: 3000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+          max-wait: 2000ms
+      cluster:
+        nodes:
+          - 192.168.1.10:7000
+          - 192.168.1.11:7001
+          - 192.168.1.12:7002
+          - 192.168.1.13:7003
+          - 192.168.1.14:7004
+          - 192.168.1.15:7005
+        max-redirects: 3
+
+  flyway:
+    url: jdbc:postgresql://localhost:5432/common-db
+    user: username
+    password: password
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    schemas: public
+    enabled: true
+    clean-disabled: false
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        current_session_context_class: org.springframework.orm.hibernate5.SpringSessionContext
+        show_sql: true
+        format_sql: true
+  kafka:
+    producer:
+      bootstrap-servers: ${KAFKA_SERVER:localhost:9092}
+      acks: all # 0, 1, all
+      compression-type: snappy # none, gzip, snappy, lz4, zstd
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      batch-size: 65536 # default: 16 KB (16 KB đến 1 MB)
+      buffer-memory: 67108864 # 64 MB memory buffer
+      retries: 10
+      properties:
+        linger.ms: 10 # millisecond
+        enable.idempotence: true # Không bị duplicate message khi retry, ...
+        max.in.flight.requests.per.connection: 5 # Giữ thứ tự message đúng khi retry
+    consumer:
+      bootstrap-servers: ${KAFKA_SERVER:localhost:9092}
+      group-id: common-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+      max-poll-records: 500 # Giới hạn số record mỗi lần poll
+      heartbeat-interval: 3000 # Kiểm tra kết nối với broker mỗi 3s
+      fetch-min-size: 1048576  # 1MB data mỗi lần fetch
 
 kafka:
+  topic:
+    common-lib:
+      common-topic: ${COMMON_TOPIC:com.demo.common-topic}
+    account-service:
+      account-topic: ${ACCOUNT_TOPIC:com.demo.account-topic}
+  # START: Cấu hình riêng Producer / Consumer
   bootstrap-servers: ${KAFKA_SERVER:localhost:9092}
   producers:
     test:
@@ -47,3 +122,4 @@ kafka:
       topic: ${KAFKA_CONSUMER_TEST_TOPIC:test1}
       group-id: ${KAFKA_CONSUMER_TEST_GROUP_ID:test-group-id}
       auto-offset-reset: ${KAFKA_CONSUMER_TEST_OFFSET_RESET:earliest}
+  # END: Cấu hình riêng

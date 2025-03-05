@@ -16,6 +16,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.io.BufferedReader;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -23,11 +24,17 @@ import java.util.stream.Collectors;
 @Component
 public class LoggingAspect {
 
+    // Pointcut for methods annotated with @SystemLogging
     @Pointcut("@annotation(com.tech.common.aop.logging.SystemLogging)")
-    public void systemLoggingPointcut() {
+    public void systemLoggingAnnotationPointcut() {
     }
 
-    @Around("systemLoggingPointcut()")
+    // Pointcut for classes annotated with @SystemLogging
+    @Pointcut("within(@com.tech.common.aop.logging.SystemLogging *)")
+    public void systemLoggingWithinPointcut() {
+    }
+
+    @Around("systemLoggingAnnotationPointcut() || systemLoggingWithinPointcut()")
     public Object logRequestResponse(ProceedingJoinPoint joinPoint) throws Throwable {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         HttpServletRequest request = attributes.getRequest();
@@ -40,7 +47,7 @@ public class LoggingAspect {
         BufferedReader reader = request.getReader();
         String requestBody = reader.lines().collect(Collectors.joining(System.lineSeparator()));
 
-        SystemLogging systemLogging = methodSignature.getMethod().getAnnotation(SystemLogging.class);
+        SystemLogging systemLogging = this.getSystemLogging(joinPoint, methodSignature);
 
         this.buildRequestLog(systemLogging, httpMethod, controllerName, methodName, requestBody);
 
@@ -57,6 +64,15 @@ public class LoggingAspect {
         return result;
     }
 
+    private SystemLogging getSystemLogging(ProceedingJoinPoint joinPoint, MethodSignature methodSignature) {
+        SystemLogging systemLogging = methodSignature.getMethod().getAnnotation(SystemLogging.class);
+        if (Objects.isNull(systemLogging)) {
+            Class<?> targetClass = joinPoint.getTarget().getClass();
+            systemLogging = targetClass.getAnnotation(SystemLogging.class);
+        }
+        return systemLogging;
+    }
+
     private void buildRequestLog(SystemLogging systemLogging,
                                  String httpMethod,
                                  String controllerName,
@@ -67,7 +83,7 @@ public class LoggingAspect {
             log.info("REQUEST - httpMethod: {}, controller: {}, method: {}, request: {}",
                     httpMethod, controllerName, methodName, requestBody);
         } else {
-            log.info("REQUEST - httpMethod: {}, controller: {}, method: {}",
+            log.info("REQUEST - httpMethod: {}, controller: {}, method: {}, request: <hidden>",
                     httpMethod, controllerName, methodName);
         }
     }
@@ -86,7 +102,7 @@ public class LoggingAspect {
             log.info("RESPONSE {} - httpMethod: {}, controller: {}, method: {}, response: {}",
                     status, httpMethod, controllerName, methodName, responseData);
         } else {
-            log.info("RESPONSE {} - httpMethod: {}, controller: {}, method: {}",
+            log.info("RESPONSE {} - httpMethod: {}, controller: {}, method: {}, response: <hidden>",
                     status, httpMethod, controllerName, methodName);
         }
     }

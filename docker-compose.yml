@@ -241,6 +241,35 @@ services:
     networks:
       - zipkin-network
 
+  camunda:
+    image: camunda/camunda-bpm-platform:latest
+    container_name: camunda
+    ports:
+      - "8088:8080"
+    environment:
+      - DB_DRIVER=org.postgresql.Driver
+      - DB_URL=jdbc:postgresql://db:5432/camunda
+      - DB_USERNAME=camunda
+      - DB_PASSWORD=camunda
+      - WAIT_FOR=db:5432
+      - CAMUNDA_ADMIN_USER=admin
+      - CAMUNDA_ADMIN_PASSWORD=admin
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13
+    container_name: camunda-db
+    environment:
+      POSTGRES_USER: camunda
+      POSTGRES_PASSWORD: camunda
+      POSTGRES_DB: camunda
+    ports:
+      - "5432:5432"
+    volumes:
+      - camunda-db-data:/var/lib/postgresql/data
+
+
 volumes:
   kafka-data:
   redis-data:
@@ -251,6 +280,7 @@ volumes:
   postgres_data:
     driver: local
   esdata:
+  camunda-db-data:
 
 networks:
   postgres-network:

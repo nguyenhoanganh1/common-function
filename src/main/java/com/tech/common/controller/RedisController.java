@@ -1,55 +1,45 @@
 package com.tech.common.controller;
 
-import com.tech.common.aop.logging.SystemLogging;
-import com.tech.common.cache.redis.RedisCacheService;
 import com.tech.common.response.ResponseUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@SystemLogging
+//@SystemLogging
 @RequiredArgsConstructor
 @RequestMapping("/redis")
 @RestController
 public class RedisController {
 
-    private final RedisCacheService redisCacheService;
+    private final RedisTestService redisTestService;
 
     @PostMapping("/string")
     public ResponseEntity<ResponseUtil<String>> putStringInCache() {
-        String key = "string-123";
-        String value = "123";
-        redisCacheService.putStringInCache(key, value);
-
-        String data = redisCacheService.getStringFromCache(key);
+        var data = redisTestService.getStringRedisCache();
         return ResponseEntity.ok(ResponseUtil.success(data));
     }
 
     @PostMapping("/list")
     public ResponseEntity<ResponseUtil<List<String>>> putListInCache() {
-        String key = "list-123";
-        List<String> values = new ArrayList<>();
-        values.add("123");
-        values.add("456");
-        redisCacheService.putListInCache(key, values);
-
-        List<String> data = redisCacheService.getListFromCache(key);
+        var data = redisTestService.getListRedisCache();
         return ResponseEntity.ok(ResponseUtil.success(data));
     }
 
     @PostMapping("/map")
     public ResponseEntity<ResponseUtil<Map<String, String>>> putMapInCache() {
-        String key = "key-123";
-        Map<String, String> valueMap = Map.of("map-123", "123");
-        redisCacheService.putMapInCache(key, valueMap);
+        var data = redisTestService.getMapRedisCache();
+        return ResponseEntity.ok(ResponseUtil.success(data));
+    }
 
-        Map<String, String> data = redisCacheService.getMapFromCache(key);
+    @PostMapping("/local-cache")
+    public ResponseEntity<ResponseUtil<String>> getInLocalCache(@RequestBody String key) {
+        var data = redisTestService.getStringLocalCache(key);
         return ResponseEntity.ok(ResponseUtil.success(data));
     }
 }
