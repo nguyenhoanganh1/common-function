@@ -1,0 +1,14 @@
+<config xmlns="http://www.ehcache.org/v3"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.ehcache.org/v3 http://www.ehcache.org/schema/ehcache-core.xsd">
+
+    <cache alias="com.tech.common.entity.User">
+        <expiry>
+            <ttl unit="seconds">10</ttl> <!-- TTL: 10 phút -->
+        </expiry>
+        <resources>
+            <heap unit="entries">500</heap> <!-- max 500 entries -->
+        </resources>
+    </cache>
+
+</config>

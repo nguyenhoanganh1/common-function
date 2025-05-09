@@ -39,9 +39,17 @@ dependencyManagement {
 }
 
 dependencies {
+    // Database L2 Cache
+//    implementation 'javax.cache:cache-api:1.1.1'
+    implementation 'org.hibernate.orm:hibernate-jcache:6.5.2.Final'
+    implementation 'org.ehcache:ehcache::jakarta'
+//    implementation 'org.springframework.boot:spring-boot-starter-cache'
 
     // Connection Pool
-    implementation 'com.zaxxer:HikariCP:6.0.0'
+    implementation 'com.vladmihalcea.flexy-pool:flexy-dropwizard-metrics:3.0.2'
+//    testImplementation 'com.vladmihalcea.flexy-pool:flexy-common-adapter:3.0.2'
+    implementation 'com.vladmihalcea.flexy-pool:flexy-hikaricp:3.0.2'
+    implementation 'com.vladmihalcea.flexy-pool:flexy-pool-core:3.0.2'
 
     // Database Migration
     implementation "org.flywaydb:flyway-database-postgresql"

@@ -40,7 +40,7 @@ spring:
       max-lifetime: 1000
       connection-timeout: 20000
       pool-name: HikariCP
-      auto-commit: true
+      auto-commit: false
   data:
     redis:
       mode: standalone  # standalone / cluster
@@ -64,7 +64,6 @@ spring:
           - 192.168.1.14:7004
           - 192.168.1.15:7005
         max-redirects: 3
-
   flyway:
     url: jdbc:postgresql://localhost:5432/common-db
     user: username
@@ -76,11 +75,22 @@ spring:
     clean-disabled: false
   jpa:
     show-sql: true
+    open-in-view: false
     properties:
       hibernate:
-        current_session_context_class: org.springframework.orm.hibernate5.SpringSessionContext
-        show_sql: true
+        generate_statistics: true
         format_sql: true
+        javax:
+          cache:
+            missing_cache_strategy: create
+            uri: classpath:ehcache.xml
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+          region.factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+          provider_class: org.ehcache.jsr107.EhcacheCachingProvider
+        jdbc:
+          lob_contextual_creation: true
   kafka:
     producer:
       bootstrap-servers: ${KAFKA_SERVER:localhost:9092}
@@ -105,7 +115,9 @@ spring:
       max-poll-records: 500 # Giới hạn số record mỗi lần poll
       heartbeat-interval: 3000 # Kiểm tra kết nối với broker mỗi 3s
       fetch-min-size: 1048576  # 1MB data mỗi lần fetch
-
+      properties:
+        processing-guarantee: exactly-once
+        partition-assignment-strategy: cooperative-sticky
 kafka:
   topic:
     common-lib:
@@ -123,3 +135,20 @@ kafka:
       group-id: ${KAFKA_CONSUMER_TEST_GROUP_ID:test-group-id}
       auto-offset-reset: ${KAFKA_CONSUMER_TEST_OFFSET_RESET:earliest}
   # END: Cấu hình riêng
+
+flexy:
+  pool:
+    unique-id: Flexy-Pool-Common
+    metric-log-report-millis: 5
+    connection-acquisition-time-threshold-millis: 100
+    connection-lease-time-threshold-millis: 250
+    max-overgrow-pool-size: 5
+    retry-connection-acquisition: 2
+
+logging:
+  level:
+    org:
+      hibernate:
+        stat: DEBUG
+        cache: INFO
+        jpa: INFO

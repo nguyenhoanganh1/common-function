@@ -1,0 +1,250 @@
+version: '3.8'
+
+services:
+  hadoop-master:
+    image: bde2020/hadoop-namenode:latest
+    container_name: hadoop-master
+    ports:
+      - "9870:9870"  # Namenode Web UI
+      - "9000:9000"  # HDFS Namenode
+      - "8020:8020"  # HDFS Datanode connect
+    environment:
+      - CLUSTER_NAME=hadoop-cluster
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/namenode
+    networks:
+      - hadoop_net
+
+  hadoop-worker1:
+    image: bde2020/hadoop-datanode:latest
+    container_name: hadoop-worker1
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://hadoop-master:8020
+    volumes:
+      - hadoop_datanode1:/hadoop/dfs/datanode
+    networks:
+      - hadoop_net
+    depends_on:
+      - hadoop-master
+
+  hadoop-worker2:
+    image: bde2020/hadoop-datanode:latest
+    container_name: hadoop-worker2
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://hadoop-master:8020
+    volumes:
+      - hadoop_datanode2:/hadoop/dfs/datanode
+    networks:
+      - hadoop_net
+    depends_on:
+      - hadoop-master
+
+  hadoop-worker3:
+    image: bde2020/hadoop-datanode:latest
+    container_name: hadoop-worker3
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://hadoop-master:8020
+    volumes:
+      - hadoop_datanode3:/hadoop/dfs/datanode
+    networks:
+      - hadoop_net
+    depends_on:
+      - hadoop-master
+
+  hadoop-resourcemanager:
+    image: bde2020/hadoop-resourcemanager:latest
+    container_name: hadoop-resourcemanager
+    hostname: hadoop-resourcemanager
+    ports:
+      - "8088:8088"  # ResourceManager Web UI
+      - "8030:8030"  # Scheduler
+      - "8031:8031"  # Resource Tracker
+      - "8032:8032"  # ResourceManager RPC
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://hadoop-master:8020
+    networks:
+      - hadoop_net
+    depends_on:
+      - hadoop-master
+
+  hadoop-nodemanager1:
+    image: bde2020/hadoop-nodemanager:latest
+    container_name: hadoop-nodemanager1
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://hadoop-master:8020
+      - YARN_CONF_yarn_resourcemanager_hostname=hadoop-resourcemanager
+    networks:
+      - hadoop_net
+    depends_on:
+      - hadoop-resourcemanager
+      - hadoop-master
+
+  hadoop-nodemanager2:
+    image: bde2020/hadoop-nodemanager:latest
+    container_name: hadoop-nodemanager2
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://hadoop-master:8020
+      - YARN_CONF_yarn_resourcemanager_hostname=hadoop-resourcemanager
+    networks:
+      - hadoop_net
+    depends_on:
+      - hadoop-resourcemanager
+      - hadoop-master
+
+  hadoop-nodemanager3:
+    image: bde2020/hadoop-nodemanager:latest
+    container_name: hadoop-nodemanager3
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://hadoop-master:8020
+      - YARN_CONF_yarn_resourcemanager_hostname=hadoop-resourcemanager
+    networks:
+      - hadoop_net
+    depends_on:
+      - hadoop-resourcemanager
+      - hadoop-master
+
+  spark-master1:
+    image: bde2020/spark-master:latest
+    container_name: spark-master1
+    hostname: spark-master1
+    ports:
+      - "8080:8080"  # Spark Master Web UI
+      - "7077:7077"  # Spark Master Service
+    environment:
+      - SPARK_MASTER_HOST=spark-master1
+      - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
+      - SPARK_DIST_CLASSPATH=$(hadoop classpath)
+      - SPARK_DAEMON_JAVA_OPTS=-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=zookeeper:2181 -Dspark.deploy.zookeeper.dir=/spark
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+    networks:
+      - hadoop_net
+    depends_on:
+      - hadoop-master
+      - zookeeper
+
+  spark-master2:
+    image: bde2020/spark-master:latest
+    container_name: spark-master2
+    hostname: spark-master2
+    ports:
+      - "8081:8080"  # Spark Master Web UI (port khác để tránh xung đột)
+      - "7078:7077"  # Spark Master Service (port khác để tránh xung đột)
+    environment:
+      - SPARK_MASTER_HOST=spark-master2
+      - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
+      - SPARK_DIST_CLASSPATH=$(hadoop classpath)
+      - SPARK_DAEMON_JAVA_OPTS=-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=zookeeper:2181 -Dspark.deploy.zookeeper.dir=/spark
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+    networks:
+      - hadoop_net
+    depends_on:
+      - hadoop-master
+      - zookeeper
+
+  spark-worker1:
+    image: bde2020/spark-worker:latest
+    container_name: spark-worker1
+    environment:
+      - SPARK_MASTER=spark://spark-master1:7077,spark-master2:7077
+      - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
+      - SPARK_DIST_CLASSPATH=$(hadoop classpath)
+    volumes:
+      - hadoop_datanode1:/hadoop/dfs/datanode
+    networks:
+      - hadoop_net
+    depends_on:
+      - spark-master1
+      - spark-master2
+      - hadoop-worker1
+
+  spark-worker2:
+    image: bde2020/spark-worker:latest
+    container_name: spark-worker2
+    environment:
+      - SPARK_MASTER=spark://spark-master1:7077,spark-master2:7077
+      - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
+      - SPARK_DIST_CLASSPATH=$(hadoop classpath)
+    volumes:
+      - hadoop_datanode2:/hadoop/dfs/datanode
+    networks:
+      - hadoop_net
+    depends_on:
+      - spark-master1
+      - spark-master2
+      - hadoop-worker2
+
+  spark-worker3:
+    image: bde2020/spark-worker:latest
+    container_name: spark-worker3
+    environment:
+      - SPARK_MASTER=spark://spark-master1:7077,spark-master2:7077
+      - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
+      - SPARK_DIST_CLASSPATH=$(hadoop classpath)
+    volumes:
+      - hadoop_datanode3:/hadoop/dfs/datanode
+    networks:
+      - hadoop_net
+    depends_on:
+      - spark-master1
+      - spark-master2
+      - hadoop-worker3
+
+  zookeeper:
+    image: zookeeper:3.8
+    container_name: zookeeper
+    hostname: zookeeper
+    ports:
+      - "2181:2181"  # Zookeeper client port
+    networks:
+      - hadoop_net
+
+  nifi:
+    image: apache/nifi:latest
+    container_name: nifi
+    ports:
+      - "8085:8080"  # UI Access
+      - "8443:8443"  # HTTPS
+    environment:
+      - NIFI_WEB_HTTP_HOST=0.0.0.0
+      - NIFI_WEB_HTTP_PORT=8080
+      #      - NIFI_WEB_HTTPS_HOST=0.0.0.0
+      #      - NIFI_WEB_HTTPS_PORT=8443
+      - AUTH=tls
+      - NIFI_SENSITIVE_PROPS_KEY=ThisIsASecretKey123  # Thêm để mã hóa thuộc tính nhạy cảm
+      - SINGLE_USER_CREDENTIALS_USERNAME=username
+      - SINGLE_USER_CREDENTIALS_PASSWORD=ThisIsASecretKey123
+      - KEYSTORE_PATH=/opt/certs/keystore.jks
+      - KEYSTORE_TYPE=JKS
+      - KEYSTORE_PASSWORD=ThisIsASecretKey123
+      - TRUSTSTORE_PATH=/opt/certs/truststore.jks
+      - TRUSTSTORE_PASSWORD=ThisIsASecretKey123
+      - TRUSTSTORE_TYPE=JKS
+      - INITIAL_ADMIN_IDENTITY='CN=nifi, O=example, OU=example, C=example'
+    volumes:
+      - ./certs:/opt/certs
+      - nifi_conf:/opt/nifi/nifi-current/conf
+      - nifi_database:/opt/nifi/nifi-current/database_repository
+      - nifi_flowfile:/opt/nifi/nifi-current/flowfile_repository
+      - nifi_content:/opt/nifi/nifi-current/content_repository
+      - nifi_provenance:/opt/nifi/nifi-current/provenance_repository
+      - nifi_logs:/opt/nifi/nifi-current/logs
+      - nifi_state:/opt/nifi/nifi-current/state
+    networks:
+      - hadoop_net
+volumes:
+  hadoop_namenode:
+  hadoop_datanode1:
+  hadoop_datanode2:
+  hadoop_datanode3:
+  nifi_conf:
+  nifi_database:
+  nifi_flowfile:
+  nifi_content:
+  nifi_provenance:
+  nifi_logs:
+  nifi_state:
+
+networks:
+  hadoop_net:
